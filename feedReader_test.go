@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -42,7 +41,7 @@ func buildFileList(fileCount int) (fl []File) {
 
 //download directory
 func TestGetDirectory(t *testing.T) {
-	fl := buildFileList(3)
+	fl := buildFileList(5)
 	template, err := template.New("listing").Parse(directoryTemplate)
 	if err != nil {
 		t.Fatal(err)
@@ -109,18 +108,16 @@ func TestZipFunctions(t *testing.T) {
 		}
 		rc, err := f.Open()
 		if err != nil {
-			log.Fatal(err)
+			t.Fatal(err)
 		}
 		defer rc.Close()
 		buff := bytes.NewBuffer(nil)
 		_, err = io.Copy(buff, rc)
 		if err != nil {
-			log.Fatal(err)
+			t.Fatal(err)
 		}
 		rresult, err := rclient.LRange(listName, index-1, index-1).Result()
 		if rresult[0] != buff.String() {
-			t.Log(rresult)
-			t.Log(buff.String())
 			t.Fatal("stored data not equal")
 		}
 	}

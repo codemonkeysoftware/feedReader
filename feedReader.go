@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	HTTPDirectory = "http://bitly.com/nuvi-plz"
+	httpDirectory = "http://bitly.com/nuvi-plz"
 	listName      = "NEWS_XML"
 	redisHost     = "localhost:6379"
 	redisPass     = ""
@@ -108,7 +108,7 @@ func setupRedis() (client *redis.Client, err error) {
 }
 
 func main() {
-	downloadList, err := getZipListings(HTTPDirectory)
+	downloadList, err := getZipListings(httpDirectory)
 	if err != nil {
 		log.Print(err)
 		return
