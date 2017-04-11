@@ -17,6 +17,9 @@ import (
 const (
 	HTTPDirectory = "http://bitly.com/nuvi-plz"
 	listName      = "NEWS_XML"
+	redisHost     = "localhost:6379"
+	redisPass     = ""
+	redisDB       = 0
 )
 
 func getZipListings(directory string) (downloadList []string, err error) {
@@ -25,12 +28,10 @@ func getZipListings(directory string) (downloadList []string, err error) {
 		return
 	}
 	URL := response.Request.URL.String()
-
 	d, err := goquery.NewDocumentFromResponse(response)
 	if err != nil {
 		return
 	}
-
 	d.Find("td a").Each(func(i int, s *goquery.Selection) {
 		name, ok := s.Attr("href")
 		if !ok {
@@ -51,7 +52,7 @@ func getZip(URL string) (zipFile *os.File, err error) {
 		return
 	}
 	defer resp.Body.Close()
-	zipFile, err = ioutil.TempFile("./", "downloaded")
+	zipFile, err = ioutil.TempFile("./", "download")
 	if err != nil {
 		return
 	}
@@ -65,47 +66,44 @@ func openZip(zipFile *os.File) (zipReader *zip.ReadCloser, err error) {
 	return
 }
 
-func pushXML(f *zip.File, client *redis.Client) (int64, error) {
+func pushXML(f *zip.File, client *redis.Client) (index int64, err error) {
 	rc, err := f.Open()
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 	defer rc.Close()
 	buff := bytes.NewBuffer(nil)
 	_, err = io.Copy(buff, rc)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 	length, err := client.LLen(listName).Result()
 	if err != nil {
-		return 0, err
+		return
 	}
 	listItems, err := client.LRange(listName, 0, length).Result()
 	if err != nil {
-		return 0, err
+		return
 	}
 	for _, v := range listItems {
 		if buff.String() == v {
-			return 0, nil
+			return
 		}
 	}
-	index, err := client.RPush(listName, buff.Bytes()).Result()
+	index, err = client.RPush(listName, buff.Bytes()).Result()
 	if err != nil {
-		return 0, err
+		return
 	}
-	return index, nil
+	return
 }
 
 func setupRedis() (client *redis.Client, err error) {
 	client = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:     redisHost,
+		Password: redisPass,
+		DB:       redisDB,
 	})
 	_, err = client.Ping().Result()
-	if err != nil {
-		return
-	}
 	return
 }
 

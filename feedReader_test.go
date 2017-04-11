@@ -31,6 +31,12 @@ func buildFileList(fileCount int) (fl []File) {
 		file.Size = "1.0M"
 		fl = append(fl, file)
 	}
+	var file = File{
+		"file.doc",
+		"",
+		"",
+	}
+	fl = append(fl, file)
 	return
 }
 
